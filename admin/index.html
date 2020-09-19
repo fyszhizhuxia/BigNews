@@ -54,5 +54,26 @@
 
         </div>
     </div>
+    <script>
+        // 发送Ajax请求，数据
+        // 获得个人信息
+        // 直接访问会出现错误，因为你虽然登录了，但是http是一个无状态协议，服务器并不知道你是谁
+        // 这里引入了一个token，登录页面成功后的返回值有一个token项，需要保存再本地，需要每次发送ajax请求之前，让服务器知道你是谁，需要设置一个请求头!
+        // 原生中xhr.setRequestHeader('Authorization',location.getItem('token'))
+        //你已登录,由于每次发送都要利用请求头带着这个token，太麻烦，JQ引入了一个$.ajaxSetup(),即在ajax发送之前进行的操作，窍门，放置在jquery-1.12.4.min.js最底部，让它自己执行
+
+        $.ajax({
+            url: 'http://localhost:8080/api/v1/admin/user/info',
+            type: 'get',
+            dataType: 'json',
+            success: function (backData) {
+                // console.log(backData);
+                $('.user_info>img').attr('src', backData.data.userPic);
+                $('.user_info>sapn').text(`欢迎  ` + backData.data.nickname);
+                $('.user_center_link>img').attr('src', backData.data.userPic);
+            }
+        });
+    </script>
 </body>
+
 </html>
