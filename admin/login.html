@@ -37,7 +37,26 @@
       </form>
     </div>
   </div>
+  <!-- 模态框 -->
+  <div class="modal fade" tabindex="-1" role="dialog" id="myModal">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+              aria-hidden="true">&times;</span></button>
+          <h4 class="modal-title">温馨提示：</h4>
+        </div>
+        <div class="modal-body">
+          <p>One fine body&hellip;</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-dismiss="modal">确认</button>
+        </div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
   <script>
+    // 由于弹出框太丑，需要bootstrap引入模态框，模态框不要乱加，它应该在body里同级
     // 入口函数
     $(function () {
       // 给登录按钮一个点击事件
@@ -48,8 +67,10 @@
         let username = $('.input_txt').val().trim();
         let password = $('.input_pass').val().trim();
         // 多获取的值进行判断
-        if (username.length == 0 || password == 0) {
-          alert('请输入密码或者用户名');
+        if (username.length == 0 || password.length == 0) {
+          // alert('请输入密码或者用户名');
+          $('.modal-body>p').text('请输入密码或者用户名');
+          $('#myModal').modal();
           return;
         } else {
           // 发送ajax请求
@@ -64,10 +85,17 @@
             success: function (backData) {
               // console.log(backData);
               if (backData.code == 200) {
-                alert('登录成功');
-                window.location.href = './index.html';
+                // alert('登录成功');
+                // 登录成功的时候，太快，导致看不到确认登录这个模态框，不要引入模态框的一个事件hidden.bs.modal,当模态框隐藏后载执行
+                $('.modal-body>p').text('登录成功');
+                $('#myModal').modal();
+                $('#myModal').on('hidden.bs.modal', function (e) {
+                  window.location.href = './index.html';
+                });
               } else {
-                alert('请输入正确的密码或者用户名');
+                // alert('请输入正确的密码或者用户名');
+                $('.modal-body>p').text('请输入正确的密码或者用户名');
+                $('#myModal').modal();
               }
             }
           });
