@@ -45,7 +45,7 @@
                     <label for="inputPassword3" class="col-sm-2 control-label">用户图标：</label>
                     <div class="col-sm-10">
                         <img src="images/2.jpg" alt="" class="user_pic">
-                        <input style="display: block" name="userPic" type="file" id="exampleInputFile">
+                        <input style="display: none" name="userPic" type="file" id="exampleInputFile">
                         <!-- 给label标签的for属性赋值,值是input标签的id,那这样的话点击label就相当于点击了input -->
                         <br>
                         <label for="exampleInputFile">
@@ -69,7 +69,60 @@
             </form>
         </div>
     </div>
+    <script>
+        // 发送ajax请求，获取用户的信息
+        $.ajax({
+            url: bigNew.user_detail,
+            type: 'get',
+            dataType: 'json',
+            success: function (backData) {
+                // console.log(backData);
+                // 把用户的信息渲染到页面中的表单中
+                // $('.username').val(backData.data.username);
+                // $('.nickname').val(backData.data.nickname);
+                // $('.email').val(backData.data.email);
+                $('.col-sm-10>img').attr('src', backData.data.userPic);
+                // 简单写法
+                for (let key in backData.data) {
+                    // console.log(key);
+                    $('.' + key).val(backData.data[key]);
+                };
+            }
+        });
 
+        // 预览图片,给表单注册onchange事件
+        $('#exampleInputFile').on('change', function () {
+            let file = this.files[0];
+            let url = URL.createObjectURL(file);
+            $('.col-sm-10>img').attr('src', url);
+        });
+
+        // 给提交编辑按钮设置点击事件
+        $('.btn-edit').on('click', function (e) {
+            e.preventDefault();
+            // 得到表单里的值
+            let fd = new FormData($('form')[0])
+            // 发送ajax请求
+            $.ajax({
+                url: bigNew.user_edit,
+                type: 'post',
+                dataType: 'json',
+                data: fd,
+                contentType: false,
+                processData: false,
+                success: function (backData) {
+                    alert('修改成功')
+                    console.log(backData);
+                    if (backData.code == 200) {
+                        // 更新成功后，要刷新页面，但是这个是页面的嵌套，需要用到window.parent
+                        window.parent.location.reload();
+                    };
+                }
+            });
+
+        });
+        // 小知识点补充。利用label标签，把选择文件的按钮变的好看，隐藏表单，让label标签里的内容显示.把input的display改为none
+    </script>
 </body>
 
 </html>
