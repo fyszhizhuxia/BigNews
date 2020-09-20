@@ -15,6 +15,7 @@
   <script src="./libs/jquery-1.12.4.min.js"></script>
   <!-- 引入bootstrap的js文件 -->
   <script src="./libs/bootstrap/js/bootstrap.min.js"></script>
+  <script src="./libs/http.js"></script>
 </head>
 
 <body>
@@ -75,7 +76,7 @@
         } else {
           // 发送ajax请求
           $.ajax({
-            url: 'http://localhost:8080/api/v1/admin/user/login',
+            url: bigNew.user_login,
             type: 'post',
             dataType: 'json',
             data: {
