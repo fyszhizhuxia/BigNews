@@ -48,7 +48,7 @@
         <!-- 顶部栏 -->
         <div class="header_bar">
             <div class="user_center_link">
-                <a href="./user.html" target="main_frame">个人中心</a>
+                <a href="./user.html" target="myIframe">个人中心</a>
                 <img src="images/2.jpg" alt="person">
                 <a href="javascript:void(0)" class="logout"><i class="iconfont icon-tuichu"></i> 退出</a>
             </div>
@@ -67,6 +67,8 @@
         // 原生中xhr.setRequestHeader('Authorization',location.getItem('token'))
         //你已登录,由于每次发送都要利用请求头带着这个token，太麻烦，JQ引入了一个$.ajaxSetup(),即在ajax发送之前进行的操作，窍门，放置在jquery-1.12.4.min.js最底部，让它自己执行
 
+        // 发送ajax请求，获取用户信息，但是必须到token这个牌子，让它知道，所以这里需要在发送请求的时候个它设置一个带token信息的请求头，由于没发送一次就要添加一次，太麻烦，引入了一个新的知识点$.ajaxSetup()在js压缩包的最底部添加两个方法beforeSend error(xhr、status、error)，作为全局配置
+        // 发送ajax，获取用户信息
         $.ajax({
             url: bigNew.user_info,
             type: 'get',
@@ -74,45 +76,48 @@
             success: function (backData) {
                 // console.log(backData);
                 $('.user_info>img').attr('src', backData.data.userPic);
-                $('.user_info>sapn').text(`欢迎  ` + backData.data.nickname);
                 $('.user_center_link>img').attr('src', backData.data.userPic);
+                $('.user_info>span').text(`欢迎  ` + backData.data.nickname);
             }
         });
 
-        // 点击退出，由于是token，所以不需要退出接口,直接删除缓存数据即可
-        $('.logout').on('click', function () {
-            localStorage.removeItem('token');
-            window.location.href = './login.html';
-        });
-
+        // 利用iframe设置嵌套网页，iframe需要有一个name属性，可以给它的src属性值一个默认的值
+        // 利用a标签的跳转链接，跳转到对于的页面，但是a的traget属性值，必须写iframe的name属性值，通过设置iframe标签的样式进行排布它的位置和大小等
         // 给一级菜单栏设置点击事件
         $('.level01').on('click', function () {
             $(this).addClass('active').siblings().removeClass('active');
-            // 如果点击的是文章管理，滑出二级菜单栏
             if ($(this).index() == 1) {
                 $('.level02').slideToggle();
-                // 下箭头也添加类利用toggleClass
-                $('.level01').find('b').toggleClass('rotate0');
-                // 点击文章管理，默认选中第一个
-                // 这里需要区别jq里面的调用a,和dom树里面的调用a的点击事件
-                // jq里，这会执行绑定的事件
-                // $('.level02 li>a').eq(0).click();
-                // dom树里，不但会执行绑定的事件，还是执行a的默认跳转事件
-                $('.level02 li>a').eq(0)[0].click();
-
+                $(this).find('b').toggleClass('rotate0');
+                // 如果选中二级菜单，默认选中二级菜单的第一个,区别jq和dom树种的点击事件
+                // jq种，只会触发绑定的事件
+                // dom树种，会触发绑定事件+默认事件
+                // $('.level02 li>a:eq(0)').click();
+                $('.level02 li>a:eq(0)')[0].click();
             } else {
                 $('.level02 li').removeClass('active');
-            };
+            }
         });
-
         // 给二级菜单设置点击事件
         $('.level02 li').on('click', function () {
-            // 给二级菜单设置类
-            $(this).addClass('active').siblings().removeClass('active');
-            // 点击二级菜单，选中文章管理(其他一级移出类，对应的一级添加类)
+            // 对应的一级菜单添加类
             $('.level01').removeClass('active');
-            $('.level01').eq(1).addClass('active');
-        })
+            $('.level01:eq(1)').addClass('active');
+            // 对应的二级菜单添加类
+            $('.level02 li').removeClass('active');
+            $(this).addClass('active');
+
+        });
+        // 点击退出，这是不需要退出接口
+        $('.user_center_link>a:eq(1)').on('click', function () {
+            // alert('11');
+            localStorage.removeItem('token');
+        });
+        // parent.$('selector')
+        // parent.$('.user_center_link a:eq(0)').$('.')
+        $('.user_center_link a:eq(0)').on('click', function () {
+            parent.$('.level01:eq(3)').click()
+        });
     </script>
 </body>
 

@@ -14,6 +14,9 @@
     <script src="./libs/bootstrap/js/bootstrap.min.js"></script>
     <!-- 引入模板引擎js文件 -->
     <script src="./libs/template-web.js"></script>
+    <!-- 引入基地址js文件 -->
+    <script src="./libs/http.js"></script>
+
 </head>
 
 <body>
@@ -31,14 +34,14 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
+                    <!--       <tr>
                         <td>奇趣事</td>
                         <td>funny</td>
                         <td class="text-center">
-                            <a href="javascript:void(0);" data-toggle="modal" class=" btn btn-info btn-xs">编辑</a>
+                            <button data-toggle="modal" class="btn btn-info btn-xs">编辑</button>
                             <a href="javascript:void(0);" class="btn btn-danger btn-xs">删除</a>
                         </td>
-                    </tr>
+                    </tr> -->
                 </tbody>
                 <tfoot>
                     <tr>
@@ -51,5 +54,152 @@
             </table>
         </div>
     </div>
+    <!-- 引入模态框 -->
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="exampleModalLabel">文章分类</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="recipient-name" class="control-label">文章类别</label>
+                            <input type="text" class="form-control" id="recipient-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="message-text" class="control-label">类别描述</label>
+                            <input class="form-control" id="message-text"></input>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default btn-cancel" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary btn-sure">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 引入文章列表模板 -->
+    <script id='cat_list' type="text/html">
+        {{each data v}}
+        <tr>
+            <td>{{v.name}}</td>
+            <td>{{v.slug}}</td>
+            <td class="text-center">
+                <button data-id="{{v.id}}" data-target="#myModal" data-toggle="modal" class="btn btn-info btn-xs" id="edit">编辑</button>
+                <a data-id="{{v.id}}" href="javascript:void(0);" class="btn btn-danger btn-xs btn-del">删除</a>
+            </td>
+        </tr>
+        {{/each}}
+    </script>
+
+    <script>
+        // 发送ajax请求，获取所有文章类别
+        $.ajax({
+            url: bigNew.category_list,
+            type: 'get',
+            dataType: 'json',
+            success: function (backData) {
+                // console.log(backData);
+                // 利用模板渲染到页面
+                $('table>tbody').html(template('cat_list', backData));
+            }
+        });
+
+        // 点击新增按钮,或者编辑按钮时,引入复合模态框,通过判断文本,来确认是点击的哪个
+        // 这里使用的是第二种模态框弹出的做法
+        // 需要引入一个新的知识点
+        $('#myModal').on('show.bs.modal', function (e) {
+            // console.log(this);//这里的this指的是模态框
+            // console.log(e.relatedTarget);
+            if ($(e.relatedTarget).text() == '新增分类') {
+                $('.btn-sure').text('新增');
+            } else {
+                $('.btn-sure').text('编辑');
+                // 把内容给相应的表单值
+                $('#recipient-name').val($(e.relatedTarget).parent().prev().prev().text());
+                $('#message-text').val($(e.relatedTarget).parent().prev().text());
+                // 让模态框里面的确认按钮与当前点击的文章类别的id相同
+                $('.btn-sure').attr('data-id', $(e.relatedTarget).attr('data-id'));
+
+            };
+        });
+        // 给模态框里面的确认按钮设置点击事件
+        $('.btn-sure').on('click', function () {
+            // if($(this))
+            if ($(this).text() == '新增') {
+                // 发送ajax请求
+                $.ajax({
+                    url: bigNew.category_add,
+                    type: 'post',
+                    dataType: 'json',
+                    data: {
+                        name: $('#recipient-name').val(),
+                        slug: $('#message-text').val()
+                    },
+                    success: function (backData) {
+                        // console.log(backData);
+                        if (backData.code == 201) {
+                            alert('创建成功');
+                            window.location.reload();
+                        };
+                    }
+                });
+            } else {
+                // 发送ajax请求
+                $.ajax({
+                    url: bigNew.category_edit,
+                    type: 'post',
+                    dataType: 'json',
+                    data: {
+                        id: $(this).attr('data-id'),
+                        name: $('#recipient-name').val(),
+                        slug: $('#message-text').val()
+                    },
+                    success: function (backData) {
+                        // console.log(backData);
+                        if (backData.code == 200) {
+                            alert('修改成功');
+                            window.location.reload();
+                        }
+                    }
+                });
+            }
+        });
+        // 给取消按钮设置点击事件
+        $('.btn-cancel').on('click', function () {
+            $('#recipient-name').val('');
+            $('#message-text').val('');
+        });
+
+
+        // 删除按钮注册点击事件,必须要动态注册
+        $('table>tbody').on('click', '.btn-del', function () {
+            let id = $(this).attr('data-id');
+            confirm('你确定要删除吗');
+            // 发送ajax请求
+            $.ajax({
+                url: bigNew.category_delete,
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    id: id
+                },
+                success: function (backData) {
+                    // console.log(backData);
+                    if (backData.code == 204) {
+                        alert('删除成功');
+                        window.location.reload();
+                    }
+                }
+            });
+
+        })
+
+    </script>
+</body>
 
 </html>

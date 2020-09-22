@@ -23,5 +23,6 @@
         comment_reject: baseURL + '/admin/comment/reject', //文章评论不通过
         comment_delete: baseURL + '/admin/comment/delete', //文章评论删除
     };
+    // 对外暴露接口
     window.bigNew = bigNew;
 })(window)
