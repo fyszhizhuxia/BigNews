@@ -171,8 +171,10 @@
         });
         // 给取消按钮设置点击事件
         $('.btn-cancel').on('click', function () {
-            $('#recipient-name').val('');
-            $('#message-text').val('');
+            // $('#recipient-name').val('');
+            // $('#message-text').val('');
+            // 换种方式,表单重置
+            $('form')[0].reset();
         });
 
 
