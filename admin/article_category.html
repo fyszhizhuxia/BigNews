@@ -114,6 +114,7 @@
         // 需要引入一个新的知识点
         $('#myModal').on('show.bs.modal', function (e) {
             // console.log(this);//这里的this指的是模态框
+            console.log($(this));
             // console.log(e.relatedTarget);
             if ($(e.relatedTarget).text() == '新增分类') {
                 $('.btn-sure').text('新增');

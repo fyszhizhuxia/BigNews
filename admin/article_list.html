@@ -15,6 +15,8 @@
     <script src="./libs/template-web.js"></script>
     <!-- 引入http.js -->
     <script src="./libs/http.js"></script>
+    <!-- 引入分页js文件 -->
+    <script src="./libs/jquery.twbsPagination.js"></script>
     <!-- 引入所有文章简洁模板 -->
     <script id='cat_modal' type="text/html">
         {{each data.data v}}
@@ -25,7 +27,7 @@
             <td class="text-center">{{v.date}}</td>
             <td class="text-center">{{v.state}}</td>
             <td class="text-center">
-                <a data-id="{{v.id}}" href="article_edit.html" class="btn btn-default btn-xs">编辑</a>
+                <a data-id="{{v.id}}" href="article_edit.html?id={{v.id}}" class="btn btn-default btn-xs">编辑</a>
                 <a data-id="{{v.id}}" href="javascript:void(0);" class="btn btn-danger btn-xs delete">删除</a>
             </td>
         </tr>
@@ -95,27 +97,74 @@
                 </tbody>
             </table>
             <div class="row text-center">
+                <!-- 引入分页的html结构 -->
+                <ul id="pagination" class="pagination-sm"></ul>
             </div>
         </div>
     </div>
     <script>
+
         $(function () {
-            $.ajax({
-                url: bigNew.article_query,
-                type: 'get',
-                dataType: 'json',
-                data: {
-                    type: '',
-                    state: '',
-                    page: 1,
-                    perpage: 6
-                },
-                success: function (backData) {
-                    // console.log(backData);
-                    // 利用模板渲染页面
-                    $('table>tbody').html(template('cat_modal', backData));
-                }
-            });
+            let currentPage = 1;
+            // 方法一
+            /*      $.ajax({
+                     url: bigNew.article_query,
+                     type: 'get',
+                     dataType: 'json',
+                     data: {
+                         type: $('#selCategory').val(),
+                         state: $('#selStatus').val(),
+                         page: 1,
+                         perpage: 6
+                     },
+                     success: function (backData) {
+                         // console.log(backData);
+                         // 利用模板渲染页面
+                         $('table>tbody').html(template('cat_modal', backData));
+                         // 加载成功后，jQ添加分页
+                         // 每次都要重新渲染分页
+                         $('#pagination').twbsPagination('destroy');
+                         $('#pagination').twbsPagination({
+                             totalPages: backData.data.totalPage,
+                             startPage: 1,
+                             visiblePages: 7,
+                             first: '首页',
+                             prev: '上一页',
+                             next: '下一页',
+                             last: '尾页',
+                             // 页面当前点击的页数
+                             onPageClick: function (event, page) {
+                                 $('#page-content').text('Page ' + page);
+                                 currentPage = page;
+                                 console.log(page, currentPage);
+     
+     
+     
+                                 // 当前点击页码时，希望页面能去到当前点击的页面
+                                 // 需要重新发送ajax请求，重新渲染页面,当前page不等于1，等当前的点击页
+                                 $.ajax({
+                                     url: bigNew.article_query,
+                                     type: 'get',
+                                     dataType: 'json',
+                                     data: {
+                                         type: $('#selCategory').val(),
+                                         state: $('#selStatus').val(),
+                                         page: page,
+                                         perpage: 6
+                                     },
+                                     success: function (backData) {
+                                         // console.log(backData);
+                                         // 利用模板渲染页面
+                                         $('table>tbody').html(template('cat_modal', backData));
+                                     }
+                                 });
+     
+                             }
+                         });
+     
+                     }
+                 }); */
+
 
             // 给筛选按钮里面的第一个按钮设置文字类别的选项,发送ajax请求
             $.ajax({
@@ -123,19 +172,17 @@
                 type: 'get',
                 dataType: 'json',
                 success: function (backData) {
-                    console.log(backData);
+                    // console.log(backData);
                     if (backData.code == 200) {
                         // 利用模板渲染页面
                         $('#selCategory').html(template('cat_list', backData));
                     }
                 }
             });
-
-            // 给筛选按钮一个点击事件
-            $('#btnSearch').on('click', function (e) {
-                e.preventDefault();
-                // alert('11');
-                // 发送ajax请求,重新渲染页面
+            // -------------------------------------------------------------------------
+            // 封装一个函数，获得数据
+            // 方法二
+            function getPage(currentPage, callBack) {
                 $.ajax({
                     url: bigNew.article_query,
                     type: 'get',
@@ -143,20 +190,161 @@
                     data: {
                         type: $('#selCategory').val(),
                         state: $('#selStatus').val(),
-                        page: 1,
+                        page: currentPage,
                         perpage: 6
                     },
                     success: function (backData) {
                         // console.log(backData);
                         // 利用模板渲染页面
                         $('table>tbody').html(template('cat_modal', backData));
+                        if (callBack != null) {
+                            callBack(backData);
+                        }
+                    }
+                });
+            };
+            // 第一次调用(方法二)
+            getPage(1, function (backData) {
+                // 加载成功后，jQ添加分页
+                // 每次都要重新渲染分页
+                $('#pagination').twbsPagination('destroy');
+                $('#pagination').twbsPagination({
+                    totalPages: backData.data.totalPage,
+                    startPage: 1,
+                    visiblePages: 7,
+                    first: '首页',
+                    prev: '上一页',
+                    next: '下一页',
+                    last: '尾页',
+                    // 页面当前点击的页数
+                    onPageClick: function (event, page) {
+                        $('#page-content').text('Page ' + page);
+                        currentPage = page;
+                        // console.log(page, currentPage);
+
+                        // 当前点击页码时，希望页面能去到当前点击的页面
+                        // 需要重新发送ajax请求，重新渲染页面,当前page不等于1，等当前的点击页
+                        getPage(currentPage);
+
                     }
                 });
 
-            })
+            });
 
-        })
 
+
+            // --------------------------------------------------------------------
+            //方法一
+            // 给筛选按钮一个点击事件
+            /*             $('#btnSearch').on('click', function (e) {
+                            e.preventDefault();
+                            // alert('11');
+                            // 发送ajax请求,重新渲染页面
+                            $.ajax({
+                                url: bigNew.article_query,
+                                type: 'get',
+                                dataType: 'json',
+                                data: {
+                                    type: $('#selCategory').val(),
+                                    state: $('#selStatus').val(),
+                                    page: 1,
+                                    perpage: 6
+                                },
+                                success: function (backData) {
+                                    console.log(backData);
+                                    // 利用模板渲染页面
+                                    $('table>tbody').html(template('cat_modal', backData));
+            
+            
+                                    // 添加分页功能
+                                    $('#pagination').twbsPagination('destroy');
+                                    $('#pagination').twbsPagination({
+                                        totalPages: backData.data.totalPage,
+                                        startPage: 1,
+                                        visiblePages: 7,
+                                        first: '首页',
+                                        prev: '上一页',
+                                        next: '下一页',
+                                        last: '尾页',
+                                        onPageClick: function (event, page) {
+                                            $('#page-content').text('Page ' + page);
+                                            currentPage = page;
+                                            console.log(page, currentPage);
+            
+            
+                                            // 当前点击页码时，希望页面能去到当前点击的页面
+                                            // 需要重新发送ajax请求，重新渲染页面,当前page不等于1，等当前的点击页
+                                            $.ajax({
+                                                url: bigNew.article_query,
+                                                type: 'get',
+                                                dataType: 'json',
+                                                data: {
+                                                    type: $('#selCategory').val(),
+                                                    state: $('#selStatus').val(),
+                                                    page: page,
+                                                    perpage: 6
+                                                },
+                                                success: function (backData) {
+                                                    // console.log(backData);
+                                                    // 利用模板渲染页面
+                                                    $('table>tbody').html(template('cat_modal', backData));
+                                                }
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        }) */
+            // ----------------------------------------------------
+            // 第二次调用(方法二)
+            $('#btnSearch').on('click', function (e) {
+                e.preventDefault();
+                getPage(1, function (backData) {
+                    // 添加分页功能
+                    $('#pagination').twbsPagination('destroy');
+                    $('#pagination').twbsPagination({
+                        totalPages: backData.data.totalPage,
+                        startPage: 1,
+                        visiblePages: 7,
+                        first: '首页',
+                        prev: '上一页',
+                        next: '下一页',
+                        last: '尾页',
+                        onPageClick: function (event, page) {
+                            $('#page-content').text('Page ' + page);
+                            currentPage = page;
+                            // console.log(page, currentPage);
+                            // 当前点击页码时，希望页面能去到当前点击的页面
+                            // 需要重新发送ajax请求，重新渲染页面,当前page不等于1，等当前的点击页
+                            getPage(currentPage);
+                        }
+                    });
+                });
+            });
+
+
+            // 给删除按钮绑定事件,需要动态注册
+            $('table>tbody').on('click', '.delete', function (e) {
+
+                // 发送ajax请求
+                $.ajax({
+                    url: bigNew.article_delete,
+                    type: 'post',
+                    dataType: 'json',
+                    data: {
+                        id: $(this).attr('data-id')
+                    },
+                    success: function (backData) {
+                        // console.log(backData);
+                        if (backData.code == 204) {
+                            alert('文章删除成功');
+                            window.location.href = './article_list.html';
+                        }
+
+                    }
+                });
+            });
+        });
     </script>
 </body>
 
